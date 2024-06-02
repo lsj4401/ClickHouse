@@ -2,7 +2,6 @@
 import json
 import logging
 import os
-import re
 from typing import Dict, List, Set, Union
 from urllib.parse import quote
 
@@ -112,7 +111,7 @@ class PRInfo:
         # release_pr and merged_pr are used for docker images additional cache
         self.release_pr = 0
         self.merged_pr = 0
-        self.labels = set()
+        self.labels = []  # type: List[str]
 
         repo_prefix = f"{GITHUB_SERVER_URL}/{GITHUB_REPOSITORY}"
         self.task_url = GITHUB_RUN_URL
@@ -234,7 +233,7 @@ class PRInfo:
                 self.number = 0
                 if pull_request:
                     self.merged_pr = pull_request["number"]
-                self.labels = set()
+                self.labels = []
                 self.pr_html_url = f"{repo_prefix}/commits/{ref}"
                 self.base_ref = ref
                 self.base_name = self.repo_full_name
@@ -245,7 +244,7 @@ class PRInfo:
                 )
             else:
                 self.number = pull_request["number"]
-                self.labels = {label["name"] for label in pull_request["labels"]}
+                self.labels = [label["name"] for label in pull_request["labels"]]
 
                 self.base_ref = pull_request["base"]["ref"]
                 self.base_name = pull_request["base"]["repo"]["full_name"]
@@ -312,12 +311,6 @@ class PRInfo:
 
     @property
     def is_release(self) -> bool:
-        return self.number == 0 and bool(
-            re.match(r"^2[1-9]\.[1-9][0-9]*$", self.head_ref)
-        )
-
-    @property
-    def is_release_branch(self) -> bool:
         return self.number == 0 and not self.is_merge_queue
 
     @property
